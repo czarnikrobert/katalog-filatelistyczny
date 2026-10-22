@@ -1,0 +1,179 @@
+@import 'tailwindcss';
+
+/*
+ * System wizualny „Mój Katalog”:
+ * - jedna ciepła rampa neutralna (papier), akcent marki: granat, wyróżnienia: złoto,
+ * - kolory semantyczne (red / emerald / amber z Tailwinda) tylko dla stanów i komunikatów,
+ * - promienie: rounded-xl (12px) dla kontenerów, rounded-lg (8px) dla kontrolek,
+ * - cienie e1–e5 według położenia na osi Z, zabarwione granatem.
+ */
+@theme {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Fraunces', ui-serif, Georgia, serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
+
+  --color-paper-50: hsl(40 33% 98%);
+  --color-paper-100: hsl(40 27% 95%);
+  --color-paper-200: hsl(38 22% 89%);
+  --color-paper-300: hsl(36 16% 80%);
+  --color-paper-400: hsl(34 9% 56%);
+  --color-paper-500: hsl(30 6% 42%);
+  --color-paper-600: hsl(30 7% 34%);
+  --color-paper-700: hsl(28 9% 25%);
+  --color-paper-800: hsl(26 11% 17%);
+  --color-paper-900: hsl(24 14% 11%);
+
+  --color-navy-50: hsl(220 40% 96%);
+  --color-navy-100: hsl(220 38% 91%);
+  --color-navy-200: hsl(220 34% 82%);
+  --color-navy-300: hsl(220 30% 68%);
+  --color-navy-400: hsl(220 30% 52%);
+  --color-navy-500: hsl(220 38% 38%);
+  --color-navy-600: hsl(220 45% 28%);
+  --color-navy-700: hsl(220 48% 21%);
+  --color-navy-800: hsl(221 50% 16%);
+  --color-navy-900: hsl(222 52% 11%);
+
+  --color-gold-50: hsl(43 60% 95%);
+  --color-gold-100: hsl(43 58% 88%);
+  --color-gold-200: hsl(42 55% 76%);
+  --color-gold-300: hsl(41 52% 62%);
+  --color-gold-400: hsl(40 50% 50%);
+  --color-gold-500: hsl(39 54% 42%);
+  --color-gold-600: hsl(37 58% 34%);
+  --color-gold-700: hsl(35 60% 27%);
+  --color-gold-800: hsl(33 58% 20%);
+  --color-gold-900: hsl(31 55% 14%);
+
+  /* Aliasy semantyczne używane w komponentach */
+  --color-paper: var(--color-paper-100);
+  --color-card: hsl(40 40% 99.5%);
+  --color-line: var(--color-paper-200);
+  --color-control: var(--color-paper-400);
+  --color-ink: var(--color-paper-900);
+  --color-muted: var(--color-paper-600);
+  --color-subtle: var(--color-paper-500);
+  --color-navy: var(--color-navy-700);
+  --color-gold: var(--color-gold-500);
+  --color-gold-soft: var(--color-gold-100);
+  --color-danger: hsl(4 62% 40%);
+
+  --shadow-e1: 0 1px 3px hsl(222 40% 15% / 0.12);
+  --shadow-e2: 0 4px 6px hsl(222 40% 15% / 0.12);
+  --shadow-e3: 0 5px 15px hsl(222 40% 15% / 0.12);
+  --shadow-e4: 0 10px 24px hsl(222 40% 15% / 0.12);
+  --shadow-e5: 0 15px 35px hsl(222 40% 15% / 0.12);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-rise: rise 0.5s var(--ease-out-expo) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+    font-feature-settings: 'ss01', 'tnum';
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply text-navy;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-gold-400;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition duration-300 ease-out-expo select-none active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60;
+  }
+
+  /* Hierarchia akcji: primary (jeden na widok) → secondary (obrys) → tertiary (link) */
+  .btn-primary {
+    @apply bg-navy-700 text-paper-50 shadow-e1 hover:bg-navy-600 hover:shadow-e2;
+  }
+
+  .btn-secondary {
+    @apply border border-paper-300 bg-card text-navy-700 shadow-e1 hover:border-paper-400 hover:bg-paper-50;
+  }
+
+  .btn-ghost {
+    @apply text-navy-700 hover:bg-paper-200/60;
+  }
+
+  .btn-danger-link {
+    @apply text-danger hover:bg-red-50;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-control bg-card px-3 py-2 text-sm text-ink transition duration-300 ease-out-expo outline-none placeholder:text-subtle hover:border-paper-500 focus:border-navy-500 focus:ring-4 focus:ring-navy-100;
+  }
+
+  .card {
+    @apply rounded-xl border border-line bg-card shadow-e1;
+  }
+
+  .eyebrow {
+    @apply text-xs font-medium tracking-wider text-subtle uppercase;
+  }
+
+  .skeleton {
+    @apply animate-shimmer rounded-lg bg-[linear-gradient(90deg,var(--color-paper-200)_0%,var(--color-paper-100)_50%,var(--color-paper-200)_100%)] bg-[length:200%_100%];
+  }
+
+  /*
+   * Ząbkowanie znaczka: półokrągłe wycięcia wzdłuż krawędzi.
+   * Warstwa 1 kryje wnętrze, warstwa 2 to siatka otworów widoczna tylko na marginesie.
+   * Cień daje drop-shadow na elemencie nadrzędnym (box-shadow zostałby wycięty maską).
+   */
+  .perforated {
+    --hole: 3.5px;
+    --step: 11px;
+    padding: calc(var(--step) / 2);
+    background: white;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      radial-gradient(circle, #0000 var(--hole), #000 calc(var(--hole) + 0.5px))
+        calc(var(--step) / -2) calc(var(--step) / -2) / var(--step) var(--step) round;
+  }
+
+  .stamp-shadow {
+    filter: drop-shadow(0 1px 1.5px hsl(222 40% 15% / 0.18)) drop-shadow(0 4px 8px hsl(222 40% 15% / 0.08));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
