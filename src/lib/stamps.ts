@@ -26,7 +26,7 @@ export async function deleteStamp(id: string) {
   if (error) throw error
 }
 
-interface OrderRow {
+export interface OrderRow {
   id: string
   issue_year: number | null
   issue_date: string | null
@@ -35,7 +35,7 @@ interface OrderRow {
 }
 
 // Kolejność katalogowa: rok, data emisji (puste na końcu roku), numer katalogowy sortowany „po ludzku” (339 < 1841, 347-a < 347-b).
-function catalogOrder(a: OrderRow, b: OrderRow) {
+export function catalogOrder(a: OrderRow, b: OrderRow) {
   return (
     (a.issue_year ?? 9999) - (b.issue_year ?? 9999) ||
     (a.issue_date ?? '9999').localeCompare(b.issue_date ?? '9999') ||

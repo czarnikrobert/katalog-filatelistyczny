@@ -13,7 +13,9 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku.
 
 ## Bezpieczeństwo
 
-- **Decyzja (2026-10-22): cała aplikacja, łącznie z katalogiem ogólnym, jest prywatna** — dostęp tylko po zalogowaniu. Nie dodawać polityk dla roli `anon`; plik `0002_public_catalog.sql.example` zostaje nieużywany.
+- **Decyzja (2026-10-23, zastępuje prywatny katalog z 2026-10-22): katalog ogólny jest publiczny (tylko odczyt), kolekcja prywatna.** Migracja `0002_publiczny_katalog.sql`: rola `anon` czyta `countries`, `themes`, `series`, `stamps`, `stamp_catalog_numbers` oraz zdjęcia katalogowe (`stamp_images.specimen_id is null`) i ich pliki w Storage. `specimens`, `valuations`, `storage_locations`, skany egzemplarzy i wszelkie zapisy — tylko właściciel.
+- Front: trasy publiczne (`/`, `/roczniki`, `/rocznik/:year`, `/katalog`, `/znaczek/:id`) i strefa właściciela pod `RequireAuth`. Informację o posiadaniu (`owned_count`, „×1 / brak”, filtr posiadania, egzemplarze) pokazuj tylko przy `session` — dla gościa `owned_count` zawsze wynosi 0.
+- Grafiki znaczków pochodzą z kzp.pl za zgodą autora (Marek Jedziniak) — podpis w stopce `Layout` musi zostać.
 - Każda tabela ma RLS z warunkiem `owner_id = auth.uid()`; `owner_id` ma domyślnie `auth.uid()`, więc front go nie wysyła.
 - Zdjęcia: prywatny bucket `stamp-images`, ścieżka `{owner_id}/{stamp_id}/{uuid}.{ext}` + miniatura `{uuid}_min.jpg` (`thumb_path`), wyświetlane przez podpisane URL-e (`useSignedUrls`). Logika w `src/lib/images.ts`; `specimen_id = null` → zdjęcie katalogowe, ustawione → skan egzemplarza.
 - Usuwanie: najpierw pliki w Storage, potem wiersze (kaskada nie usuwa plików) — patrz `deleteStamp`, `deleteSpecimen`.

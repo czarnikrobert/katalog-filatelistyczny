@@ -16,19 +16,17 @@ interface Props {
   caption?: string | null
   // Pozycja bez egzemplarza w kolekcji — pusty znaczek w szarym tonie.
   missing?: boolean
+  // Podgląd bez akcji (gość): bez ustawiania zdjęcia głównego i usuwania.
+  readOnly?: boolean
 }
 
 // Duże zdjęcie + pasek miniatur z akcjami (zdjęcie główne, usuwanie).
-export function ImageGallery({ images, onChanged, onError, alt, caption, missing }: Props) {
+export function ImageGallery({ images, onChanged, onError, alt, caption, missing, readOnly }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [busy, setBusy] = useState(false)
-  const selected =
-    images.find((i) => i.id === selectedId) ?? images.find((i) => i.is_primary) ?? images[0] ?? null
-  const urls = useSignedUrls([
-    ...images.map((i) => i.thumb_path ?? i.storage_path),
-    selected?.storage_path ?? null,
-  ])
+  const selected = images.find((i) => i.id === selectedId) ?? images.find((i) => i.is_primary) ?? images[0] ?? null
+  const urls = useSignedUrls([...images.map((i) => i.thumb_path ?? i.storage_path), selected?.storage_path ?? null])
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true)
@@ -67,30 +65,32 @@ export function ImageGallery({ images, onChanged, onError, alt, caption, missing
           {imageTypeLabels[selected.image_type]}
           {selected.specimen_id ? ' · skan egzemplarza' : ' · zdjęcie katalogowe'}
         </span>
-        <span className="flex gap-1">
-          {selected.is_primary ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 text-gold-600">
-              <Star size={14} fill="currentColor" /> Zdjęcie główne
-            </span>
-          ) : (
+        {!readOnly && (
+          <span className="flex gap-1">
+            {selected.is_primary ? (
+              <span className="inline-flex items-center gap-1 px-2 py-1 text-gold-600">
+                <Star size={14} fill="currentColor" /> Zdjęcie główne
+              </span>
+            ) : (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => run(() => setPrimaryImage(selected))}
+                className="btn btn-ghost px-2 py-1 text-xs"
+              >
+                <Star size={14} /> Ustaw jako główne
+              </button>
+            )}
             <button
               type="button"
               disabled={busy}
-              onClick={() => run(() => setPrimaryImage(selected))}
-              className="btn btn-ghost px-2 py-1 text-xs"
+              onClick={() => setConfirmDelete(true)}
+              className="btn btn-danger-link px-2 py-1 text-xs"
             >
-              <Star size={14} /> Ustaw jako główne
+              <Trash2 size={14} /> Usuń
             </button>
-          )}
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => setConfirmDelete(true)}
-            className="btn btn-danger-link px-2 py-1 text-xs"
-          >
-            <Trash2 size={14} /> Usuń
-          </button>
-        </span>
+          </span>
+        )}
       </div>
 
       {images.length > 1 && (

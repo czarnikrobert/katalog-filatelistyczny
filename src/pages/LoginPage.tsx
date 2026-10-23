@@ -1,6 +1,6 @@
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation } from 'react-router'
+import { Link, Navigate, useLocation } from 'react-router'
 import { useAuth } from '../auth/context'
 import { Logo, Notice } from '../components/ui'
 import { passwordResetRedirect, supabase } from '../lib/supabase'
@@ -84,7 +84,7 @@ export function LoginPage() {
           <Logo />
           <div className="space-y-2">
             <h1 className="font-serif text-3xl tracking-tight">Witaj z powrotem</h1>
-            <p className="text-sm text-muted">Zaloguj się, aby otworzyć katalog i kolekcję.</p>
+            <p className="text-sm text-muted">Zaloguj się, aby prowadzić swoją kolekcję i edytować katalog.</p>
           </div>
 
           <div className="space-y-4">
@@ -128,6 +128,13 @@ export function LoginPage() {
             <button type="button" onClick={resetPassword} className="btn btn-ghost w-full text-muted">
               Nie pamiętam hasła
             </button>
+          </div>
+
+          <div className="border-t border-line pt-6 text-center">
+            <Link to="/" className="btn btn-ghost text-sm">
+              <ArrowLeft size={16} /> Przeglądaj katalog bez logowania
+            </Link>
+            <p className="mt-2 text-xs text-subtle">Logowanie jest potrzebne tylko do prowadzenia własnej kolekcji.</p>
           </div>
         </form>
       </div>

@@ -1,4 +1,8 @@
 import { Stamp } from 'lucide-react'
+import { useState } from 'react'
+
+// Małe grafiki (np. ~90 px) powiększamy najwyżej 2×, żeby nie były rozmyte.
+const MAX_UPSCALE = 2
 
 interface Props {
   src?: string | null
@@ -21,7 +25,7 @@ export function StampThumb({ src, alt, missing, caption, className = '' }: Props
           }`}
         >
           {src ? (
-            <img src={src} alt={alt} loading="lazy" className="h-full w-full object-contain" />
+            <StampImage src={src} alt={alt} />
           ) : (
             // Bez zdjęcia: posiadany znaczek w ciepłym, złotym tonie, brakujący — szary.
             <div
@@ -44,5 +48,19 @@ export function StampThumb({ src, alt, missing, caption, className = '' }: Props
         </div>
       </div>
     </div>
+  )
+}
+
+function StampImage({ src, alt }: { src: string; alt: string }) {
+  const [natural, setNatural] = useState<{ w: number; h: number } | null>(null)
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onLoad={(e) => setNatural({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+      style={natural ? { maxWidth: natural.w * MAX_UPSCALE, maxHeight: natural.h * MAX_UPSCALE } : undefined}
+      className="h-full w-full object-contain"
+    />
   )
 }

@@ -1,8 +1,10 @@
 import { BookOpen, ChevronLeft, ChevronRight, LayoutGrid, Plus, Search, Table, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { StampThumb } from '../components/StampThumb'
+import { useAuth } from '../auth/context'
+import { StampCard } from '../components/StampCard'
 import { EmptyState, PageHeader, Pill, Skeleton, StampGridSkeleton } from '../components/ui'
+import { fetchAll } from '../lib/fetchAll'
 import { plural } from '../lib/format'
 import { supabase } from '../lib/supabase'
 import type { Country, StampOverview } from '../lib/types'
@@ -26,20 +28,22 @@ const sortOptions = {
 
 type SortKey = keyof typeof sortOptions
 
-const catalogLabel = (s: StampOverview) =>
-  s.catalog_number ? `${s.catalog_system ?? 'Nr'} ${s.catalog_number}` : null
-
 export function CatalogPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const query = params.get('q') ?? ''
+  const { session } = useAuth()
+  const isOwner = Boolean(session)
   const countryId = params.get('kraj') ?? ''
-  const ownership = (params.get('posiadanie') as Ownership | null) ?? 'wszystkie'
+  const year = params.get('rok') ?? ''
+  // Filtr posiadania ma sens tylko dla zalogowanego właściciela.
+  const ownership = isOwner ? ((params.get('posiadanie') as Ownership | null) ?? 'wszystkie') : 'wszystkie'
   const sort: SortKey = (params.get('sort') as SortKey | null) ?? 'rok'
   const view = params.get('widok') === 'tabela' ? 'tabela' : 'galeria'
   const page = Math.max(1, Number(params.get('strona') ?? 1))
 
   const [countries, setCountries] = useState<Country[]>([])
+  const [years, setYears] = useState<number[]>([])
   const [rows, setRows] = useState<StampOverview[]>([])
   const [total, setTotal] = useState(0)
   const [loadedKey, setLoadedKey] = useState<string | null>(null)
@@ -63,9 +67,16 @@ export function CatalogPage() {
       .order('sort_order')
       .order('name')
       .then(({ data }) => setCountries((data as Country[]) ?? []))
+    fetchAll<{ issue_year: number | null }>((from, to) =>
+      supabase!.from('stamps').select('issue_year').range(from, to),
+    ).then((rows) =>
+      setYears(
+        [...new Set(rows.map((r) => r.issue_year).filter((y): y is number => y !== null))].sort((a, b) => b - a),
+      ),
+    )
   }, [])
 
-  const requestKey = [query, countryId, ownership, sort, page].join('|')
+  const requestKey = [query, countryId, year, ownership, sort, page].join('|')
   const loading = loadedKey !== requestKey
 
   useEffect(() => {
@@ -76,6 +87,7 @@ export function CatalogPage() {
       q = q.or(`name.ilike.%${term}%,catalog_number.ilike.%${term}%`)
     }
     if (countryId) q = q.eq('country_id', countryId)
+    if (year) q = q.eq('issue_year', Number(year))
     if (ownership === 'posiadane') q = q.gt('owned_count', 0)
     if (ownership === 'brakujace') q = q.eq('owned_count', 0)
     const { column, ascending } = sortOptions[sort] ?? sortOptions.rok
@@ -88,21 +100,25 @@ export function CatalogPage() {
         setTotal(count ?? 0)
         setLoadedKey(requestKey)
       })
-  }, [requestKey, query, countryId, ownership, sort, page])
+  }, [requestKey, query, countryId, year, ownership, sort, page])
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  const filtered = Boolean(query || countryId || ownership !== 'wszystkie')
+  const filtered = Boolean(query || countryId || year || ownership !== 'wszystkie')
 
   return (
     <>
       <PageHeader
         eyebrow="Katalog ogólny"
         title="Katalog znaczków"
-        description="Wszystkie emisje — te z Twojej kolekcji i te, których jeszcze szukasz."
+        description={
+          isOwner
+            ? 'Wszystkie emisje — te z Twojej kolekcji i te, których jeszcze szukasz.'
+            : 'Znaczki polskie z opisem emisji, numerami katalogowymi i grafikami. Szukaj po nazwie, numerze, roku lub kraju.'
+        }
       />
 
       <div className="mb-8 space-y-4">
-        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_220px_180px]">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_160px_220px_200px]">
           <form
             onSubmit={(e) => {
               e.preventDefault()
@@ -132,7 +148,20 @@ export function CatalogPage() {
               </button>
             )}
           </form>
-          <select className="input" value={countryId} onChange={(e) => update({ kraj: e.target.value })} aria-label="Kraj">
+          <select className="input" value={year} onChange={(e) => update({ rok: e.target.value })} aria-label="Rok">
+            <option value="">Wszystkie lata</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+          <select
+            className="input"
+            value={countryId}
+            onChange={(e) => update({ kraj: e.target.value })}
+            aria-label="Kraj"
+          >
             <option value="">Wszystkie kraje</option>
             {countries.map((c) => (
               <option key={c.id} value={c.id}>
@@ -155,22 +184,31 @@ export function CatalogPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex rounded-lg bg-paper-200/60 p-1" role="radiogroup" aria-label="Posiadanie">
-            {ownershipOptions.map((o) => (
-              <button
-                key={o.value}
-                role="radio"
-                aria-checked={ownership === o.value}
-                onClick={() => update({ posiadanie: o.value === 'wszystkie' ? '' : o.value })}
-                className={`rounded-lg px-3 py-1 text-sm font-medium transition duration-300 ease-out-expo ${
-                  ownership === o.value ? 'bg-card text-navy-700 shadow-e1' : 'text-muted hover:text-navy-700'
-                }`}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-          <span className="text-sm text-subtle">{loading ? <Skeleton className="h-4 w-24" /> : plural(total, 'pozycja', 'pozycje', 'pozycji')}</span>
+          {isOwner && (
+            <div className="inline-flex rounded-lg bg-paper-200/60 p-1" role="radiogroup" aria-label="Posiadanie">
+              {ownershipOptions.map((o) => (
+                <button
+                  key={o.value}
+                  role="radio"
+                  aria-checked={ownership === o.value}
+                  onClick={() => update({ posiadanie: o.value === 'wszystkie' ? '' : o.value })}
+                  className={`rounded-lg px-3 py-1 text-sm font-medium transition duration-300 ease-out-expo ${
+                    ownership === o.value ? 'bg-card text-navy-700 shadow-e1' : 'text-muted hover:text-navy-700'
+                  }`}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {year && (
+            <Link to={`/rocznik/${year}`} className="btn btn-ghost px-2 py-1 text-sm">
+              Rocznik {year} z podziałem na emisje <ChevronRight size={16} />
+            </Link>
+          )}
+          <span className="text-sm text-subtle">
+            {loading ? <Skeleton className="h-4 w-24" /> : plural(total, 'pozycja', 'pozycje', 'pozycji')}
+          </span>
           <div className="ml-auto inline-flex rounded-lg bg-paper-200/60 p-1">
             {(
               [
@@ -214,16 +252,18 @@ export function CatalogPage() {
               </button>
             }
           >
-            Spróbuj innej frazy, innego kraju albo pokaż cały katalog.
+            Spróbuj innej frazy, roku lub kraju albo pokaż cały katalog.
           </EmptyState>
         ) : (
           <EmptyState
             icon={BookOpen}
             title="Katalog jest pusty"
             action={
-              <Link to="/dodaj" className="btn btn-primary">
-                <Plus size={16} /> Dodaj pierwszy znaczek
-              </Link>
+              isOwner && (
+                <Link to="/dodaj" className="btn btn-primary">
+                  <Plus size={16} /> Dodaj pierwszy znaczek
+                </Link>
+              )
             }
           >
             Każda dodana emisja pojawi się tutaj — z informacją, czy masz ją w kolekcji.
@@ -232,29 +272,13 @@ export function CatalogPage() {
       ) : view === 'galeria' ? (
         <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {rows.map((s, i) => (
-            <Link
+            <StampCard
               key={s.id}
-              to={`/znaczek/${s.id}`}
-              className="group animate-rise space-y-3"
-              style={{ animationDelay: `${Math.min(i, 24) * 30}ms` }}
-            >
-              <div className="relative">
-                <StampThumb
-                  src={s.primary_thumb_path ? urls[s.primary_thumb_path] : null}
-                  alt={s.name}
-                  missing={s.owned_count === 0}
-                  caption={s.issue_year ? String(s.issue_year) : null}
-                  className="transition duration-500 ease-out-expo group-hover:-translate-y-1"
-                />
-                <span className="absolute top-3 right-3">
-                  {s.owned_count > 0 ? <Pill tone="navy">×{s.owned_count}</Pill> : <Pill>brak</Pill>}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <div className="line-clamp-2 text-sm leading-snug font-medium text-ink group-hover:text-navy-700">{s.name}</div>
-                <div className="text-xs text-subtle">{[catalogLabel(s), s.issue_year].filter(Boolean).join(' · ')}</div>
-              </div>
-            </Link>
+              stamp={s}
+              src={s.primary_thumb_path ? urls[s.primary_thumb_path] : null}
+              isOwner={isOwner}
+              index={i}
+            />
           ))}
         </div>
       ) : (
@@ -262,8 +286,11 @@ export function CatalogPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-line">
-                {['Nr kat.', 'Nazwa', 'Kraj', 'Rok', 'Seria', 'Posiadam'].map((h, i) => (
-                  <th key={h} className={`eyebrow px-4 py-3 font-medium whitespace-nowrap ${i === 5 ? 'text-right' : ''}`}>
+                {['Nr kat.', 'Nazwa', 'Kraj', 'Rok', 'Seria', ...(isOwner ? ['Posiadam'] : [])].map((h, i) => (
+                  <th
+                    key={h}
+                    className={`eyebrow px-4 py-3 font-medium whitespace-nowrap ${i === 5 ? 'text-right' : ''}`}
+                  >
                     {h}
                   </th>
                 ))}
@@ -276,7 +303,9 @@ export function CatalogPage() {
                   onClick={() => navigate(`/znaczek/${s.id}`)}
                   className="cursor-pointer transition duration-300 ease-out-expo hover:bg-paper-100"
                 >
-                  <td className="px-4 py-3 font-mono text-xs whitespace-nowrap text-muted">{s.catalog_number ?? '—'}</td>
+                  <td className="px-4 py-3 font-mono text-xs whitespace-nowrap text-muted">
+                    {s.catalog_number ?? '—'}
+                  </td>
                   <td className="px-4 py-3 font-medium">
                     <Link to={`/znaczek/${s.id}`} className="hover:text-navy-700" onClick={(e) => e.stopPropagation()}>
                       {s.name}
@@ -285,9 +314,11 @@ export function CatalogPage() {
                   <td className="px-4 py-3 text-muted">{s.country_name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-muted">{s.issue_year ?? '—'}</td>
                   <td className="px-4 py-3 text-muted">{s.series_name ?? '—'}</td>
-                  <td className="px-4 py-3 text-right">
-                    {s.owned_count > 0 ? <Pill tone="navy">×{s.owned_count}</Pill> : <Pill>brak</Pill>}
-                  </td>
+                  {isOwner && (
+                    <td className="px-4 py-3 text-right">
+                      {s.owned_count > 0 ? <Pill tone="navy">×{s.owned_count}</Pill> : <Pill>brak</Pill>}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -297,13 +328,21 @@ export function CatalogPage() {
 
       {pages > 1 && !loading && (
         <nav className="mt-12 flex items-center justify-center gap-4 text-sm" aria-label="Strony katalogu">
-          <button className="btn btn-secondary" disabled={page <= 1} onClick={() => update({ strona: String(page - 1) })}>
+          <button
+            className="btn btn-secondary"
+            disabled={page <= 1}
+            onClick={() => update({ strona: String(page - 1) })}
+          >
             <ChevronLeft size={16} /> Poprzednia
           </button>
           <span className="font-mono text-subtle">
             {page} / {pages}
           </span>
-          <button className="btn btn-secondary" disabled={page >= pages} onClick={() => update({ strona: String(page + 1) })}>
+          <button
+            className="btn btn-secondary"
+            disabled={page >= pages}
+            onClick={() => update({ strona: String(page + 1) })}
+          >
             Następna <ChevronRight size={16} />
           </button>
         </nav>

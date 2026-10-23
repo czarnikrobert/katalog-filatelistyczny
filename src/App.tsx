@@ -7,13 +7,15 @@ import { isPasswordReset, isSupabaseConfigured } from './lib/supabase'
 import { AlbumsPage } from './pages/AlbumsPage'
 import { CatalogPage } from './pages/CatalogPage'
 import { CollectionPage } from './pages/CollectionPage'
-import { DashboardPage } from './pages/DashboardPage'
+import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { NotConfiguredPage } from './pages/NotConfiguredPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { SpecimenFormPage } from './pages/SpecimenFormPage'
 import { StampDetailPage } from './pages/StampDetailPage'
 import { StampFormPage } from './pages/StampFormPage'
+import { YearPage } from './pages/YearPage'
+import { YearsPage } from './pages/YearsPage'
 
 // HashRouter (adresy z #/) — GitHub Pages nie obsługuje przekierowań dla tras SPA.
 export default function App() {
@@ -28,14 +30,18 @@ export default function App() {
           <HashRouter>
             <Routes>
               <Route path="/logowanie" element={<LoginPage />} />
-              <Route element={<RequireAuth />}>
-                <Route element={<Layout />}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="katalog" element={<CatalogPage />} />
+              <Route element={<Layout />}>
+                {/* Publiczne: przeglądanie katalogu bez logowania. */}
+                <Route index element={<HomePage />} />
+                <Route path="roczniki" element={<YearsPage />} />
+                <Route path="rocznik/:year" element={<YearPage />} />
+                <Route path="katalog" element={<CatalogPage />} />
+                <Route path="znaczek/:id" element={<StampDetailPage />} />
+                {/* Tylko właściciel: kolekcja i wszelkie zmiany. */}
+                <Route element={<RequireAuth />}>
                   <Route path="kolekcja" element={<CollectionPage />} />
                   <Route path="klasery" element={<AlbumsPage />} />
                   <Route path="dodaj" element={<StampFormPage />} />
-                  <Route path="znaczek/:id" element={<StampDetailPage />} />
                   <Route path="znaczek/:id/edytuj" element={<StampFormPage />} />
                   <Route path="znaczek/:id/egzemplarz/nowy" element={<SpecimenFormPage />} />
                   <Route path="znaczek/:id/egzemplarz/:specimenId" element={<SpecimenFormPage />} />
