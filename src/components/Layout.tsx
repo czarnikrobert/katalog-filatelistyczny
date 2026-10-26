@@ -1,4 +1,4 @@
-import { BookOpen, CalendarDays, Library, LayoutDashboard, LogIn, LogOut, Plus, Stamp } from 'lucide-react'
+import { BookOpen, CalendarDays, Library, LayoutDashboard, ListChecks, LogIn, LogOut, Plus, Stamp } from 'lucide-react'
 import { useEffect } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { useAuth } from '../auth/context'
@@ -10,6 +10,7 @@ const ownerNav = [
   { to: '/roczniki', label: 'Roczniki', icon: CalendarDays },
   { to: '/katalog', label: 'Katalog', icon: BookOpen },
   { to: '/kolekcja', label: 'Kolekcja', icon: Stamp },
+  { to: '/brakujace', label: 'Brakujące', icon: ListChecks, desktopOnly: true },
   { to: '/klasery', label: 'Klasery', icon: Library },
 ]
 const guestNav = [
@@ -22,7 +23,10 @@ export function Layout() {
   const { pathname } = useLocation()
   const nav = session ? ownerNav : guestNav
   // Na telefonie gość ma logowanie w dolnym menu.
-  const mobileNav = session ? ownerNav : [...guestNav, { to: '/logowanie', label: 'Zaloguj', icon: LogIn, end: false }]
+  // Dolne menu mieści 5 pozycji — „Brakujące” jest tam dostępne z pulpitu i roczników.
+  const mobileNav = session
+    ? ownerNav.filter((n) => !n.desktopOnly)
+    : [...guestNav, { to: '/logowanie', label: 'Zaloguj', icon: LogIn, end: false }]
 
   // HashRouter nie przewija strony przy zmianie trasy.
   useEffect(() => {
@@ -30,8 +34,8 @@ export function Layout() {
   }, [pathname])
 
   return (
-    <div className="min-h-dvh pb-24 md:pb-0">
-      <header className="sticky top-0 z-30 border-b border-line bg-paper-50/80 backdrop-blur-md">
+    <div className="min-h-dvh pb-24 md:pb-0 print:pb-0">
+      <header className="sticky top-0 z-30 border-b border-line bg-paper-50/80 backdrop-blur-md print:hidden">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 md:px-8 lg:gap-8">
           <Link to="/" aria-label="Mój Katalog — strona główna">
             <Logo />
@@ -73,11 +77,11 @@ export function Layout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12">
+      <main className="mx-auto max-w-7xl px-4 py-8 md:px-8 md:py-12 print:max-w-none print:p-0">
         <Outlet />
       </main>
 
-      <footer className="mx-auto max-w-7xl border-t border-line px-4 py-6 text-xs leading-relaxed text-subtle md:px-8">
+      <footer className="mx-auto max-w-7xl border-t border-line px-4 py-6 text-xs leading-relaxed text-subtle md:px-8 print:hidden">
         Grafiki znaczków:{' '}
         <a href="https://www.kzp.pl" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-navy-700">
           Katalog Znaków Pocztowych — kzp.pl
@@ -86,7 +90,7 @@ export function Layout() {
       </footer>
 
       <nav
-        className={`fixed inset-x-0 bottom-0 z-30 grid ${session ? 'grid-cols-5' : 'grid-cols-3'} border-t border-line bg-paper-50/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden`}
+        className={`fixed inset-x-0 bottom-0 z-30 grid print:hidden ${session ? 'grid-cols-5' : 'grid-cols-3'} border-t border-line bg-paper-50/80 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden`}
       >
         {mobileNav.map(({ to, label, icon: Icon, end }) => (
           <NavLink

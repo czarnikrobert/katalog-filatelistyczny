@@ -17,3 +17,9 @@ export function plural(n: number, one: string, few: string, many: string) {
   const lastTwo = n % 100
   return `${n} ${last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14) ? few : many}`
 }
+
+// Nominał do list: kwota albo zapis tekstowy przeniesiony do opisu przy imporcie („Nominał: B”).
+export function nominalLabel(s: { face_value: number | null; currency: string | null; description: string | null }) {
+  if (s.face_value != null) return formatMoney(s.face_value, s.currency)
+  return s.description?.match(/^Nominał: (.+)$/m)?.[1] ?? ''
+}

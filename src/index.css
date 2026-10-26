@@ -169,6 +169,27 @@
   }
 }
 
+/* Wydruk (np. lista brakujących): białe tło, bez animacji i cieni, marginesy A4. */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  body {
+    background: white;
+    font-size: 11pt;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

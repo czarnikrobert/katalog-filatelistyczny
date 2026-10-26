@@ -1,4 +1,4 @@
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, ListChecks } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../auth/context'
@@ -34,6 +34,13 @@ export function YearsPage() {
         eyebrow="Katalog znaczków polskich"
         title="Roczniki"
         description="Wybierz rok, aby zobaczyć wszystkie znaczki wydane w tym roku, emisja po emisji."
+        actions={
+          session && (
+            <Link to="/brakujace" className="btn btn-secondary">
+              <ListChecks size={16} /> Lista brakujących
+            </Link>
+          )
+        }
       />
       {error ? (
         <EmptyState icon={CalendarDays} title="Nie udało się wczytać roczników">

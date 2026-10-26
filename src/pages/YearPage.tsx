@@ -1,10 +1,11 @@
-import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, ListChecks } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useAuth } from '../auth/context'
 import { StampCard } from '../components/StampCard'
 import { EmptyState, PageHeader, Skeleton, StampGridSkeleton } from '../components/ui'
 import { formatDate, plural } from '../lib/format'
+import { groupIntoIssues } from '../lib/issues'
 import { catalogOrder } from '../lib/stamps'
 import { supabase } from '../lib/supabase'
 import type { StampOverview } from '../lib/types'
@@ -22,30 +23,6 @@ const ISSUE_SPAN = [
   'col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-5',
   'col-span-2 sm:col-span-3 md:col-span-4 lg:col-span-6',
 ]
-
-interface Issue {
-  key: string
-  title: string
-  date: string | null
-  stamps: StampOverview[]
-}
-
-// Emisja = seria (albo pojedynczy znaczek bez serii) wydana danego dnia.
-function groupIntoIssues(stamps: StampOverview[]): Issue[] {
-  const issues: Issue[] = []
-  const byKey = new Map<string, Issue>()
-  for (const s of stamps) {
-    const key = s.series_id ?? `${s.issue_date}|${s.name}`
-    let issue = byKey.get(key)
-    if (!issue) {
-      issue = { key, title: s.series_name ?? s.name, date: s.issue_date, stamps: [] }
-      byKey.set(key, issue)
-      issues.push(issue)
-    }
-    issue.stamps.push(s)
-  }
-  return issues
-}
 
 // Klucz = rok: przejście do sąsiedniego rocznika zaczyna widok od czystego stanu.
 export function YearPage() {
@@ -80,7 +57,7 @@ function YearView({ year }: { year: number }) {
   const owned = (stamps ?? []).filter((s) => s.owned_count > 0).length
 
   const yearNav = (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {neighbours.prev && (
         <Link to={`/rocznik/${neighbours.prev}`} className="btn btn-secondary">
           <ChevronLeft size={16} /> {neighbours.prev}
@@ -117,7 +94,16 @@ function YearView({ year }: { year: number }) {
                 .filter(Boolean)
                 .join(' · ')
         }
-        actions={yearNav}
+        actions={
+          <>
+            {isOwner && (
+              <Link to={`/brakujace?od=${year}&do=${year}`} className="btn btn-ghost">
+                <ListChecks size={16} /> Lista brakujących z {year}
+              </Link>
+            )}
+            {yearNav}
+          </>
+        }
       />
 
       {isOwner && stamps && stamps.length > 0 && (

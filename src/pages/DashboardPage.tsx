@@ -188,7 +188,7 @@ export function DashboardPage() {
               ))}
             </dl>
             {missing > 0 && (
-              <Link to="/katalog?posiadanie=brakujace" className="btn btn-secondary">
+              <Link to="/brakujace" className="btn btn-secondary">
                 Brakujące ({missing}) <ArrowUpRight size={16} />
               </Link>
             )}
