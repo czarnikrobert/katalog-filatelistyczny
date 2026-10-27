@@ -19,8 +19,9 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 - Kolejność katalogowa: `catalogOrder` z `lib/stamps.ts` (rok → data → numer sortowany „po ludzku”). Kolumna `catalog_number` jako tekst sortuje się źle (`1841` < `339`), więc listy sortuj po stronie klienta.
 - Supabase zwraca max 1000 wierszy — do pełnych list używaj `fetchAll()` z `lib/fetchAll.ts`.
 
-## Skąd są dane (stan 2026-10-26)
+## Skąd są dane (stan 2026-10-27)
 
+- W bazie: **1624 pozycje** katalogu (roczniki 1944–1948, 1970–1981, 2019–2026), 605+ serii, **755 egzemplarzy** użytkownika, 1624 zdjęcia katalogowe (każda pozycja ma zdjęcie główne). Zawsze sprawdzaj aktualne liczby zapytaniem — użytkownik dodaje dane sam.
 - 1521 pozycji z arkusza użytkownika „Znaczki spis-roczniki.xls” (roczniki 1944–1948, 1970–1981, 2019–2025); **zielona czcionka = posiadane** → 755 egzemplarzy `PL-000001…PL-000755` z notatką „Zaimportowano z arkusza…”. Kraj: do 1989 „Polska Ludowa (PRL)”, od 1990 „Polska”.
 - 103 pozycje 2025 (5451–5493) i 2026 (5494–5526) oraz **wszystkie grafiki** — z kzp.pl (Katalog Znaków Pocztowych, Marek Jedziniak) **za zgodą autora**, obejmującą zdjęcia i dane (nazwy, numery, daty, nominały). Nie pobieraj innych materiałów z kzp.pl (opisy, nakłady itp.) bez potwierdzenia użytkownika. Pobieraj spokojnie (przerwy między żądaniami).
 - Grafiki z kzp.pl są małe (~80–150 px) — `StampThumb` powiększa obraz najwyżej 2×, a `ImageGallery` pokazuje link do oryginału tylko dla zdjęć ≥ 400 px.
@@ -64,7 +65,7 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 
 - `npm run build` (tsc + vite) i `npm run lint` (oxlint) muszą przechodzić bez ostrzeżeń.
 - Podgląd: `.claude/launch.json` → serwer `katalog-dev` (port 5173). Panel przeglądarki często traci sesję — przy ekranach właściciela poproś użytkownika o zalogowanie (nigdy nie wpisuj jego hasła). Widok gościa testuj na `http://127.0.0.1:5173` (inna domena = brak sesji).
-- Testy na prawdziwej bazie: dane testowe nazywaj `TEST…` / `PRZYKŁAD…` i usuwaj po teście (także pliki w Storage i osierocone serie/klasery). Importy i wgrywanie zdjęć rób w karcie zalogowanego właściciela (moduły `/src/lib/*.ts` przez dynamiczny `import()`), długie operacje w tle z postępem w `window.__…`.
+- Testy na prawdziwej bazie: dane testowe nazywaj `TEST…` / `PRZYKŁAD…` i usuwaj po teście (także pliki w Storage i osierocone serie/klasery). Jeśli test podmienia lub usuwa prawdziwe zdjęcie, najpierw pobierz oryginał (podpisany URL) i po teście wgraj go z powrotem jako awers główny; na koniec porównaj liczbę wierszy `stamp_images` z liczbą sprzed testu. Importy i wgrywanie zdjęć rób w karcie zalogowanego właściciela (moduły `/src/lib/*.ts` przez dynamiczny `import()`), długie operacje w tle z postępem w `window.__…`.
 
 ## Publikacja
 
@@ -72,4 +73,16 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 - Autor commitów w tym repo: `Robert Czarnik <105284724+czarnikrobert@users.noreply.github.com>` (repo publiczne — bez Gmaila).
 - Zmienne Actions (repo variables): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
 - Domena w home.pl: 4 rekordy A na IP GitHub Pages (`185.199.108–111.153`) + CNAME `www` → `czarnikrobert.github.io`; HTTPS wymuszone w ustawieniach Pages.
-- Na Macu nie ma Homebrew ani globalnego `gh` — w razie potrzeby pobierz oficjalne wydanie `gh` (sprawdź sumę kontrolną) do folderu tymczasowego; logowanie `gh auth login --web` uruchamia użytkownik w terminalu.
+- Na Macu nie ma Homebrew ani globalnego `gh` — w razie potrzeby pobierz oficjalne wydanie `gh` (sprawdź sumę kontrolną) do folderu tymczasowego. Użytkownik jest zalogowany (`czarnikrobert`, token w pęku kluczy macOS), więc świeżo pobrany `gh` działa od razu; `git push` też działa bez dodatkowego logowania. Gdyby logowanie wygasło: `gh auth login --web --scopes workflow` uruchamia użytkownik w terminalu.
+- Postęp publikacji: `gh run watch <id> --exit-status`, potem sprawdź, że nowy plik `assets/index-*.js` na filatelistyka.com zawiera nowy tekst z interfejsu.
+
+## Otwarte sprawy (do zaproponowania, gdy będzie okazja)
+
+- Większe zdjęcia dla 1944–1981 i ok. 289 znaczków 2019–2026: czekamy na skany użytkownika (`/skany`); alternatywa — prośba do autora kzp.pl o większe pliki.
+- Numer 4949 występuje w katalogu dwa razy (literówka w arkuszu) — do poprawy przez użytkownika.
+- Część nazw z kzp.pl 2025–2026 jest w bierniku („Owoce naszych sadów — Malinę Polkę”) — kandydat do poprawy hurtowej za zgodą użytkownika.
+- `stamps.variant_of_id` bez interfejsu (wybór „odmiana znaczka …”).
+- README.md („Stan prac”, „Struktura”) jest nieaktualne względem CLAUDE.md.
+- GitHub Actions ostrzega o Node 20 w akcjach v4 — zaktualizować wersje akcji przy okazji.
+- Strona ma `noindex` w `index.html` — zmiana tylko na wyraźną prośbę (wyszukiwarki).
+- Reset hasła nie był testowany od początku do końca (wymaga maila użytkownika).
