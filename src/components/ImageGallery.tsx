@@ -1,5 +1,5 @@
 import { Expand, Star, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { deleteImages, setPrimaryImage } from '../lib/images'
 import { imageTypeLabels } from '../lib/labels'
 import type { StampImage } from '../lib/types'
@@ -20,6 +20,20 @@ interface Props {
   readOnly?: boolean
 }
 
+// Link do oryginału ma sens tylko dla dużych zdjęć — stare grafiki z kzp.pl mają ok. 100 px.
+const MIN_ORIGINAL_PX = 400
+
+function useImageSize(url: string | undefined) {
+  const [size, setSize] = useState<{ url: string; w: number; h: number } | null>(null)
+  useEffect(() => {
+    if (!url) return
+    const img = new Image()
+    img.onload = () => setSize({ url, w: img.naturalWidth, h: img.naturalHeight })
+    img.src = url
+  }, [url])
+  return size && size.url === url ? size : null
+}
+
 // Duże zdjęcie + pasek miniatur z akcjami (zdjęcie główne, usuwanie).
 export function ImageGallery({ images, onChanged, onError, alt, caption, missing, readOnly }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -27,6 +41,9 @@ export function ImageGallery({ images, onChanged, onError, alt, caption, missing
   const [busy, setBusy] = useState(false)
   const selected = images.find((i) => i.id === selectedId) ?? images.find((i) => i.is_primary) ?? images[0] ?? null
   const urls = useSignedUrls([...images.map((i) => i.thumb_path ?? i.storage_path), selected?.storage_path ?? null])
+  const fullUrl = selected ? urls[selected.storage_path] : undefined
+  const fullSize = useImageSize(fullUrl)
+  const canOpenOriginal = fullSize !== null && Math.max(fullSize.w, fullSize.h) >= MIN_ORIGINAL_PX
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true)
@@ -43,22 +60,26 @@ export function ImageGallery({ images, onChanged, onError, alt, caption, missing
 
   if (!selected) return <StampThumb alt={alt} caption={caption} missing={missing} className="mx-auto max-w-72" />
 
-  const fullUrl = urls[selected.storage_path]
+  const stamp = <StampThumb src={fullUrl ?? urls[selected.thumb_path ?? '']} alt={alt} />
 
   return (
     <div className="space-y-6">
-      <a
-        href={fullUrl}
-        target="_blank"
-        rel="noreferrer"
-        title="Otwórz oryginał w pełnej rozdzielczości"
-        className="group relative mx-auto block max-w-72"
-      >
-        <StampThumb src={fullUrl ?? urls[selected.thumb_path ?? '']} alt={alt} />
-        <span className="absolute right-3 bottom-3 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 text-navy-700 opacity-0 shadow-e2 backdrop-blur transition duration-300 ease-out-expo group-hover:opacity-100">
-          <Expand size={16} />
-        </span>
-      </a>
+      {canOpenOriginal ? (
+        <a
+          href={fullUrl}
+          target="_blank"
+          rel="noreferrer"
+          title={`Otwórz oryginał w pełnej rozdzielczości (${fullSize.w}×${fullSize.h} px)`}
+          className="group relative mx-auto block max-w-72"
+        >
+          {stamp}
+          <span className="absolute right-3 bottom-3 flex h-8 w-8 items-center justify-center rounded-full bg-card/80 text-navy-700 opacity-0 shadow-e2 backdrop-blur transition duration-300 ease-out-expo group-hover:opacity-100">
+            <Expand size={16} />
+          </span>
+        </a>
+      ) : (
+        <div className="mx-auto max-w-72">{stamp}</div>
+      )}
 
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-subtle">
         <span>

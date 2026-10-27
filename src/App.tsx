@@ -12,6 +12,7 @@ import { LoginPage } from './pages/LoginPage'
 import { MissingPage } from './pages/MissingPage'
 import { NotConfiguredPage } from './pages/NotConfiguredPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { ScansPage } from './pages/ScansPage'
 import { SpecimenFormPage } from './pages/SpecimenFormPage'
 import { StampDetailPage } from './pages/StampDetailPage'
 import { StampFormPage } from './pages/StampFormPage'
@@ -43,6 +44,7 @@ export default function App() {
                   <Route path="kolekcja" element={<CollectionPage />} />
                   <Route path="klasery" element={<AlbumsPage />} />
                   <Route path="brakujace" element={<MissingPage />} />
+                  <Route path="skany" element={<ScansPage />} />
                   <Route path="dodaj" element={<StampFormPage />} />
                   <Route path="znaczek/:id/edytuj" element={<StampFormPage />} />
                   <Route path="znaczek/:id/egzemplarz/nowy" element={<SpecimenFormPage />} />

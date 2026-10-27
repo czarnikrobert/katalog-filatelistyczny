@@ -23,7 +23,8 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 
 - 1521 pozycji z arkusza użytkownika „Znaczki spis-roczniki.xls” (roczniki 1944–1948, 1970–1981, 2019–2025); **zielona czcionka = posiadane** → 755 egzemplarzy `PL-000001…PL-000755` z notatką „Zaimportowano z arkusza…”. Kraj: do 1989 „Polska Ludowa (PRL)”, od 1990 „Polska”.
 - 103 pozycje 2025 (5451–5493) i 2026 (5494–5526) oraz **wszystkie grafiki** — z kzp.pl (Katalog Znaków Pocztowych, Marek Jedziniak) **za zgodą autora**, obejmującą zdjęcia i dane (nazwy, numery, daty, nominały). Nie pobieraj innych materiałów z kzp.pl (opisy, nakłady itp.) bez potwierdzenia użytkownika. Pobieraj spokojnie (przerwy między żądaniami).
-- Grafiki z kzp.pl są małe (~80–150 px) — `StampThumb` powiększa obraz najwyżej 2×.
+- Grafiki z kzp.pl są małe (~80–150 px) — `StampThumb` powiększa obraz najwyżej 2×, a `ImageGallery` pokazuje link do oryginału tylko dla zdjęć ≥ 400 px.
+- 402 znaczki z 2019–2026 mają duże zdjęcia (~500–1000 px) ze stron zapowiedzi emisji kzp.pl, dopasowane do znaczków porównaniem obrazów z małą grafiką. Lata 1944–1981 i część 2019–2026 — tylko małe grafiki; większe ma dać użytkownik skanami (`/skany`). Wikimedia Commons sprawdzone 2026-10-27: ok. 50 plików na wszystkie roczniki — nieprzydatne.
 
 ## Bezpieczeństwo
 
@@ -40,8 +41,9 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 ## Trasy i ekrany
 
 - Publiczne: `/` (gość: Roczniki, właściciel: Pulpit — `HomePage`), `/roczniki`, `/rocznik/:year` (emisje obok siebie przez `grid-cols-subgrid`), `/katalog` (filtry: fraza, rok, kraj, sortowanie; widok galerii/tabeli; paginacja 48), `/znaczek/:id`.
-- Właściciel (`RequireAuth`): `/kolekcja`, `/klasery`, `/brakujace` (okres od–do, tryb „rozpoczęte emisje”, druk i CSV), `/dodaj`, `/znaczek/:id/edytuj`, `/znaczek/:id/egzemplarz/nowy|:specimenId`.
+- Właściciel (`RequireAuth`): `/kolekcja`, `/klasery`, `/brakujace` (okres od–do, tryb „rozpoczęte emisje”, druk i CSV), `/skany` (hurtowe wgrywanie skanów), `/dodaj`, `/znaczek/:id/edytuj`, `/znaczek/:id/egzemplarz/nowy|:specimenId`.
 - Karta znaczka (właściciel): szybkie dodawanie zdjęć `QuickImageDrop` (przeciągnij / plik / ⌘V — pierwsze = awers główne, potem rewers, detale) i „Następny bez zdjęcia” (`findNextWithoutImage`). Komponent jest kluczowany `id`, żeby przejście do innego znaczka zerowało stan.
+- Skany (`ScansPage`, `lib/scans.ts`): nazwa pliku = numer Fischera (`1841.jpg` awers, `1841_r.jpg` rewers, inny dopisek po `_`/spacji = detal; `347-a`, `420A`, `2580 I` = odmiany). Tryb „zdjęcie w katalogu” (awers = główne, opcjonalnie usuwa zdjęcia katalogowe < 400 px, czyli stare grafiki kzp.pl) albo „skan mojego egzemplarza” (prywatny, przy pierwszym egzemplarzu). Przed wgraniem tabela dopasowań; numery występujące kilka razy (np. 4949) są pomijane.
 - Menu: na komputerze pełne; dolne menu na telefonie max 5 pozycji (pozycje z `desktopOnly` tylko na komputerze).
 
 ## Konwencje frontu

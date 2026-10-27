@@ -1,4 +1,4 @@
-import { Library, MapPin, Plus, Stamp, X } from 'lucide-react'
+import { ImageUp, Library, MapPin, Plus, Stamp, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { StampThumb } from '../components/StampThumb'
@@ -85,6 +85,11 @@ export function CollectionPage() {
           rows && rows.length > 0
             ? `${plural(visible.length, 'egzemplarz', 'egzemplarze', 'egzemplarzy')} · szacunkowo ${formatMoney(value, 'PLN')}`
             : 'Każdy fizyczny znaczek, który masz — ze stanem, wyceną i miejscem w klaserze.'
+        }
+        actions={
+          <Link to="/skany" className="btn btn-secondary">
+            <ImageUp size={16} /> Wgraj skany
+          </Link>
         }
       />
 

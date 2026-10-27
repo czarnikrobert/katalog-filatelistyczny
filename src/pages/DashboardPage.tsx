@@ -1,4 +1,4 @@
-import { ArrowUpRight, BookOpen, Plus, Stamp } from 'lucide-react'
+import { ArrowUpRight, BookOpen, ImageUp, Plus, Stamp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { StampThumb } from '../components/StampThumb'
@@ -187,11 +187,16 @@ export function DashboardPage() {
                 </div>
               ))}
             </dl>
-            {missing > 0 && (
-              <Link to="/brakujace" className="btn btn-secondary">
-                Brakujące ({missing}) <ArrowUpRight size={16} />
+            <div className="flex flex-wrap gap-2">
+              <Link to="/skany" className="btn btn-ghost">
+                <ImageUp size={16} /> Wgraj skany
               </Link>
-            )}
+              {missing > 0 && (
+                <Link to="/brakujace" className="btn btn-secondary">
+                  Brakujące ({missing}) <ArrowUpRight size={16} />
+                </Link>
+              )}
+            </div>
           </div>
         </section>
 
