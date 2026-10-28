@@ -6,6 +6,7 @@ import { StampCard } from '../components/StampCard'
 import { EmptyState, PageHeader, Pill, Skeleton, StampGridSkeleton } from '../components/ui'
 import { fetchAll } from '../lib/fetchAll'
 import { plural } from '../lib/format'
+import { descriptionSnippet, searchFilters } from '../lib/search'
 import { supabase } from '../lib/supabase'
 import type { Country, StampOverview } from '../lib/types'
 import { useSignedUrls } from '../lib/useSignedUrls'
@@ -48,6 +49,12 @@ export function CatalogPage() {
   const [total, setTotal] = useState(0)
   const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const [draft, setDraft] = useState(query)
+  // Pole wyszukiwania nadąża za adresem (np. przycisk „Wstecz” albo link z frazą).
+  const [draftFor, setDraftFor] = useState(query)
+  if (draftFor !== query) {
+    setDraftFor(query)
+    setDraft(query)
+  }
   const urls = useSignedUrls(rows.map((r) => r.primary_thumb_path))
 
   const update = (changes: Record<string, string>) => {
@@ -81,11 +88,7 @@ export function CatalogPage() {
 
   useEffect(() => {
     let q = supabase!.from('stamp_overview').select('*', { count: 'exact' })
-    if (query) {
-      // Przecinki i nawiasy rozbijają składnię filtra .or() — usuwamy je z frazy.
-      const term = query.replace(/[,()]/g, ' ').trim()
-      q = q.or(`name.ilike.%${term}%,catalog_number.ilike.%${term}%`)
-    }
+    for (const filter of searchFilters(query)) q = q.or(filter)
     if (countryId) q = q.eq('country_id', countryId)
     if (year) q = q.eq('issue_year', Number(year))
     if (ownership === 'posiadane') q = q.gt('owned_count', 0)
@@ -113,7 +116,7 @@ export function CatalogPage() {
         description={
           isOwner
             ? 'Wszystkie emisje — te z Twojej kolekcji i te, których jeszcze szukasz.'
-            : 'Znaczki polskie z opisem emisji, numerami katalogowymi i grafikami. Szukaj po nazwie, numerze, roku lub kraju.'
+            : 'Znaczki polskie z opisem emisji, numerami katalogowymi i grafikami. Szukaj po nazwie, opisie, numerze, roku lub kraju.'
         }
       />
 
@@ -129,7 +132,8 @@ export function CatalogPage() {
             <Search className="pointer-events-none absolute top-3 left-3 text-subtle" size={16} />
             <input
               className="input pr-8 pl-8"
-              placeholder="Szukaj po nazwie lub numerze katalogowym…"
+              placeholder="Szukaj: nazwa, opis lub numer (np. 2645)…"
+              aria-label="Szukaj po nazwie, opisie lub numerze katalogowym"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               enterKeyHint="search"
@@ -278,6 +282,7 @@ export function CatalogPage() {
               src={s.primary_thumb_path ? urls[s.primary_thumb_path] : null}
               isOwner={isOwner}
               index={i}
+              note={query ? descriptionSnippet(s, query) : null}
             />
           ))}
         </div>
@@ -310,6 +315,9 @@ export function CatalogPage() {
                     <Link to={`/znaczek/${s.id}`} className="hover:text-navy-700" onClick={(e) => e.stopPropagation()}>
                       {s.name}
                     </Link>
+                    {query && descriptionSnippet(s, query) && (
+                      <div className="mt-0.5 text-xs font-normal text-subtle">{descriptionSnippet(s, query)}</div>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-muted">{s.country_name}</td>
                   <td className="px-4 py-3 font-mono text-xs text-muted">{s.issue_year ?? '—'}</td>

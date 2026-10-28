@@ -9,12 +9,14 @@ interface Props {
   // Tylko właściciel widzi, czy ma znaczek (dla gości liczba egzemplarzy zawsze wynosi 0).
   isOwner: boolean
   index?: number
+  // Np. fragment opisu, w którym znaleziono szukane słowo.
+  note?: string | null
 }
 
 const catalogLabel = (s: StampOverview) =>
   s.catalog_number ? `${s.catalog_system ?? 'Nr'} ${s.catalog_number}` : null
 
-export function StampCard({ stamp: s, src, isOwner, index = 0 }: Props) {
+export function StampCard({ stamp: s, src, isOwner, index = 0, note }: Props) {
   return (
     <Link
       to={`/znaczek/${s.id}`}
@@ -38,6 +40,7 @@ export function StampCard({ stamp: s, src, isOwner, index = 0 }: Props) {
       <div className="space-y-1">
         <div className="line-clamp-2 text-sm leading-snug font-medium text-ink group-hover:text-navy-700">{s.name}</div>
         <div className="text-xs text-subtle">{[catalogLabel(s), s.issue_year].filter(Boolean).join(' · ')}</div>
+        {note && <div className="line-clamp-2 text-xs text-muted italic">{note}</div>}
       </div>
     </Link>
   )

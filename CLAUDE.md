@@ -19,11 +19,13 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 - Kolejność katalogowa: `catalogOrder` z `lib/stamps.ts` (rok → data → numer sortowany „po ludzku”). Kolumna `catalog_number` jako tekst sortuje się źle (`1841` < `339`), więc listy sortuj po stronie klienta.
 - Supabase zwraca max 1000 wierszy — do pełnych list używaj `fetchAll()` z `lib/fetchAll.ts`.
 
-## Skąd są dane (stan 2026-10-27)
+## Skąd są dane (stan 2026-10-28)
 
-- W bazie: **1624 pozycje** katalogu (roczniki 1944–1948, 1970–1981, 2019–2026), 605+ serii, **755 egzemplarzy** użytkownika, 1624 zdjęcia katalogowe (każda pozycja ma zdjęcie główne). Zawsze sprawdzaj aktualne liczby zapytaniem — użytkownik dodaje dane sam.
+- W bazie: **2145 pozycji** katalogu (roczniki 1944–1948, 1970–1990, 2019–2026), 840+ serii, **755 egzemplarzy** użytkownika, 2145 zdjęć katalogowych (każda pozycja ma zdjęcie główne). Zawsze sprawdzaj aktualne liczby zapytaniem — użytkownik dodaje dane sam.
+- **521 pozycji 1982–1990 (2644–3157, 209 emisji) z kzp.pl (2026-10-28)** — na prośbę użytkownika numery, daty, nazwy emisji, nominały i **opisy** („Na znaczku przedstawiono…” → `description`, jak w danych z arkusza). Nakładów, techniki druku, ząbkowania i projektantów nie pobierano. Bloki (Fi: Blok NN) pominięte, jak w pozostałych latach — znaczki z bloków są (np. 2695). Odmiany jako osobne pozycje (`2768I`/`2768II`, `3124a`/`3124b`). Każda emisja = osobna seria (nazwa z kzp, `issue_year`). Nazwy: temat z opisu przepisany ręcznie na mianownik (opis z kzp jest w bierniku); emisje bez opisu dla poszczególnych znaczków (np. ikony z Łańcuta) mają samą nazwę emisji.
+- Zdjęcia 1982–1990: kzp.pl ma dla tych lat tylko małe grafiki (~90 px, większych brak — zapowiedzi emisji są dopiero od nowszych lat). Wgrane są **grafiki powiększone ok. 3–4×** (Core Image: Lanczos + wyostrzenie), dłuższy bok < 400 px — więc tryb „usuń zdjęcia < 400 px” w `/skany` zastąpi je skanami użytkownika.
 - 1521 pozycji z arkusza użytkownika „Znaczki spis-roczniki.xls” (roczniki 1944–1948, 1970–1981, 2019–2025); **zielona czcionka = posiadane** → 755 egzemplarzy `PL-000001…PL-000755` z notatką „Zaimportowano z arkusza…”. Kraj: do 1989 „Polska Ludowa (PRL)”, od 1990 „Polska”.
-- 103 pozycje 2025 (5451–5493) i 2026 (5494–5526) oraz **wszystkie grafiki** — z kzp.pl (Katalog Znaków Pocztowych, Marek Jedziniak) **za zgodą autora**, obejmującą zdjęcia i dane (nazwy, numery, daty, nominały). Nie pobieraj innych materiałów z kzp.pl (opisy, nakłady itp.) bez potwierdzenia użytkownika. Pobieraj spokojnie (przerwy między żądaniami).
+- 103 pozycje 2025 (5451–5493) i 2026 (5494–5526) oraz **wszystkie grafiki** — z kzp.pl (Katalog Znaków Pocztowych, Marek Jedziniak) **za zgodą autora**, obejmującą zdjęcia i dane (nazwy, numery, daty, nominały). Opisy („Na znaczku przedstawiono…”) użytkownik zatwierdził 2026-10-28; innych materiałów z kzp.pl (nakłady, technika druku, projektanci, teksty o emisji) nie pobieraj bez potwierdzenia. Pobieraj spokojnie (przerwy między żądaniami).
 - Grafiki z kzp.pl są małe (~80–150 px) — `StampThumb` powiększa obraz najwyżej 2×, a `ImageGallery` pokazuje link do oryginału tylko dla zdjęć ≥ 400 px.
 - 402 znaczki z 2019–2026 mają duże zdjęcia (~500–1000 px) ze stron zapowiedzi emisji kzp.pl, dopasowane do znaczków porównaniem obrazów z małą grafiką. Lata 1944–1981 i część 2019–2026 — tylko małe grafiki; większe ma dać użytkownik skanami (`/skany`). Wikimedia Commons sprawdzone 2026-10-27: ok. 50 plików na wszystkie roczniki — nieprzydatne.
 
@@ -41,7 +43,7 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 
 ## Trasy i ekrany
 
-- Publiczne: `/` (gość: Roczniki, właściciel: Pulpit — `HomePage`), `/roczniki`, `/rocznik/:year` (emisje obok siebie przez `grid-cols-subgrid`), `/katalog` (filtry: fraza, rok, kraj, sortowanie; widok galerii/tabeli; paginacja 48), `/znaczek/:id`.
+- Publiczne: `/` (gość: Roczniki, właściciel: Pulpit — `HomePage`), `/roczniki`, `/rocznik/:year` (emisje obok siebie przez `grid-cols-subgrid`), `/katalog` (filtry: fraza, rok, kraj, sortowanie; widok galerii/tabeli; paginacja 48). Fraza (`lib/search.ts`): każde słowo musi wystąpić w nazwie, opisie, nazwie emisji albo numerze; słowo-numer (`2645`, `2768II`, `347-a`, „2580 I”) dopasowuje numer dokładnie z odmianami (`imatch`), nie „po kawałku”. Gdy słowo jest tylko w opisie, karta pokazuje fragment opisu. Bez odmiany wyrazów i bez ignorowania polskich znaków — „Banach” znajdzie „Banacha”, ale „Lodz” nie znajdzie „Łódź”, `/znaczek/:id`.
 - Właściciel (`RequireAuth`): `/kolekcja`, `/klasery`, `/brakujace` (okres od–do, tryb „rozpoczęte emisje”, druk i CSV), `/skany` (hurtowe wgrywanie skanów), `/dodaj`, `/znaczek/:id/edytuj`, `/znaczek/:id/egzemplarz/nowy|:specimenId`.
 - Karta znaczka (właściciel): szybkie dodawanie zdjęć `QuickImageDrop` (przeciągnij / plik / ⌘V — pierwsze = awers główne, potem rewers, detale) i „Następny bez zdjęcia” (`findNextWithoutImage`). Komponent jest kluczowany `id`, żeby przejście do innego znaczka zerowało stan.
 - Skany (`ScansPage`, `lib/scans.ts`): nazwa pliku = numer Fischera (`1841.jpg` awers, `1841_r.jpg` rewers, inny dopisek po `_`/spacji = detal; `347-a`, `420A`, `2580 I` = odmiany). Tryb „zdjęcie w katalogu” (awers = główne, opcjonalnie usuwa zdjęcia katalogowe < 400 px, czyli stare grafiki kzp.pl) albo „skan mojego egzemplarza” (prywatny, przy pierwszym egzemplarzu). Przed wgraniem tabela dopasowań; numery występujące kilka razy (np. 4949) są pomijane.
@@ -65,7 +67,7 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 
 - `npm run build` (tsc + vite) i `npm run lint` (oxlint) muszą przechodzić bez ostrzeżeń.
 - Podgląd: `.claude/launch.json` → serwer `katalog-dev` (port 5173). Panel przeglądarki często traci sesję — przy ekranach właściciela poproś użytkownika o zalogowanie (nigdy nie wpisuj jego hasła). Widok gościa testuj na `http://127.0.0.1:5173` (inna domena = brak sesji).
-- Testy na prawdziwej bazie: dane testowe nazywaj `TEST…` / `PRZYKŁAD…` i usuwaj po teście (także pliki w Storage i osierocone serie/klasery). Jeśli test podmienia lub usuwa prawdziwe zdjęcie, najpierw pobierz oryginał (podpisany URL) i po teście wgraj go z powrotem jako awers główny; na koniec porównaj liczbę wierszy `stamp_images` z liczbą sprzed testu. Importy i wgrywanie zdjęć rób w karcie zalogowanego właściciela (moduły `/src/lib/*.ts` przez dynamiczny `import()`), długie operacje w tle z postępem w `window.__…`.
+- Testy na prawdziwej bazie: dane testowe nazywaj `TEST…` / `PRZYKŁAD…` i usuwaj po teście (także pliki w Storage i osierocone serie/klasery). Jeśli test podmienia lub usuwa prawdziwe zdjęcie, najpierw pobierz oryginał (podpisany URL) i po teście wgraj go z powrotem jako awers główny; na koniec porównaj liczbę wierszy `stamp_images` z liczbą sprzed testu. Importy i wgrywanie zdjęć rób w karcie zalogowanego właściciela (moduły `/src/lib/*.ts` przez dynamiczny `import()`), długie operacje w tle z postępem w `window.__…`. Pliki do importu podawaj stronie przez tymczasowy `public/_import/` (usuń po imporcie). Import pisz jako wznawialny (pomija istniejące numery, dogrywa brakujące zdjęcia) i **w trakcie nie edytuj plików projektu** — 2026-10-28 karta przeładowała się w połowie importu zaraz po edycji CLAUDE.md, a przerwany zapis zostawił osierocone pliki w Storage (po imporcie porównaj pliki w folderach znaczków z `stamp_images`).
 
 ## Publikacja
 
@@ -82,6 +84,8 @@ Język: interfejs, komentarze w kodzie i dokumentacja po polsku. Użytkownik pis
 - Numer 4949 występuje w katalogu dwa razy (literówka w arkuszu) — do poprawy przez użytkownika.
 - Część nazw z kzp.pl 2025–2026 jest w bierniku („Owoce naszych sadów — Malinę Polkę”) — kandydat do poprawy hurtowej za zgodą użytkownika.
 - `stamps.variant_of_id` bez interfejsu (wybór „odmiana znaczka …”).
+- Bloki (Fischer „Blok NN”) nie są osobnymi pozycjami w żadnym roczniku — ewentualne dodanie (np. `stamp_type = 'blok'`, grafiki `fs….jpg` z kzp.pl) do decyzji użytkownika.
+- Brak lat 1949–1969 i 1991–2018. Dla 1982–1990 na kzp.pl są jeszcze nakłady, technika druku, ząbkowanie i projektanci (pola `print_run`, `printing_method`, `perforation`, `designer`) — pobrać tylko za zgodą użytkownika.
 - README.md („Stan prac”, „Struktura”) jest nieaktualne względem CLAUDE.md.
 - GitHub Actions ostrzega o Node 20 w akcjach v4 — zaktualizować wersje akcji przy okazji.
 - Strona ma `noindex` w `index.html` — zmiana tylko na wyraźną prośbę (wyszukiwarki).
