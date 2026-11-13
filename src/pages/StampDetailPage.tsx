@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight, MapPin, Pencil, Plus, Search, Stamp, Trash2 } from 'lucide-react'
+import { ArrowRight, ChevronLeft, ChevronRight, MapPin, Pencil, Plus, Search, Stamp, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -15,7 +15,7 @@ import {
   stampTypeLabels,
   valuationSourceLabels,
 } from '../lib/labels'
-import { countWithoutImage, deleteStamp, findNextWithoutImage } from '../lib/stamps'
+import { countWithoutImage, deleteStamp, findNeighborStamp, findNextWithoutImage } from '../lib/stamps'
 import { supabase } from '../lib/supabase'
 import type { CatalogNumber, Specimen, StampImage, StampOverview, StorageLocation, Valuation } from '../lib/types'
 
@@ -83,6 +83,7 @@ function StampDetail({ id }: { id: string }) {
   const [remaining, setRemaining] = useState<number | null>(null)
   const [seeking, setSeeking] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [navigatingTo, setNavigatingTo] = useState<'prev' | 'next' | null>(null)
 
   // Komunikat jest jednorazowy — czyścimy go z historii, żeby nie wracał po odświeżeniu.
   useEffect(() => {
@@ -118,6 +119,20 @@ function StampDetail({ id }: { id: string }) {
   useEffect(() => {
     if (isOwner) countWithoutImage().then(setRemaining)
   }, [version, isOwner])
+
+  // Poprzedni/następny znaczek w kolejności katalogowej — dostępne dla każdego, niezależnie od posiadania i zdjęcia.
+  const goToNeighbor = async (direction: 'prev' | 'next') => {
+    setNavigatingTo(direction)
+    try {
+      const neighbor = await findNeighborStamp(id, direction)
+      if (neighbor) navigate(`/znaczek/${neighbor}`)
+      else setNotice({ warning: 'Katalog ma tylko jedną pozycję.' })
+    } catch {
+      setNotice({ warning: 'Nie udało się przejść do kolejnego znaczka. Spróbuj ponownie.' })
+    } finally {
+      setNavigatingTo(null)
+    }
+  }
 
   const goToNextWithoutImage = async () => {
     setSeeking(true)
@@ -216,6 +231,24 @@ function StampDetail({ id }: { id: string }) {
             </>
           )}
         </ol>
+        <div className="inline-flex overflow-hidden rounded-lg border border-line">
+          <button
+            onClick={() => goToNeighbor('prev')}
+            disabled={navigatingTo !== null}
+            className="flex items-center gap-1 px-3 py-2 text-sm text-muted transition duration-300 ease-out-expo hover:bg-paper-100 hover:text-navy-700 disabled:opacity-60"
+            title="Poprzedni znaczek w katalogu"
+          >
+            <ChevronLeft size={16} /> Poprzedni
+          </button>
+          <button
+            onClick={() => goToNeighbor('next')}
+            disabled={navigatingTo !== null}
+            className="flex items-center gap-1 border-l border-line px-3 py-2 text-sm text-muted transition duration-300 ease-out-expo hover:bg-paper-100 hover:text-navy-700 disabled:opacity-60"
+            title="Następny znaczek w katalogu"
+          >
+            Następny <ChevronRight size={16} />
+          </button>
+        </div>
         {isOwner && (
           <>
             <button

@@ -60,6 +60,22 @@ export async function findNextWithoutImage(currentId: string) {
   return null
 }
 
+// Poprzedni/następny znaczek w kolejności katalogowej (ta sama co w /katalog i rocznikach) — niezależnie od
+// posiadania czy zdjęcia, dla gościa i właściciela. Zapętla się na końcach katalogu.
+export async function findNeighborStamp(currentId: string, direction: 'prev' | 'next') {
+  const rows = await fetchAll<OrderRow>((from, to) =>
+    supabase!
+      .from('stamp_overview')
+      .select('id, issue_year, issue_date, catalog_number, primary_thumb_path')
+      .range(from, to),
+  )
+  rows.sort(catalogOrder)
+  const start = rows.findIndex((r) => r.id === currentId)
+  if (start === -1 || rows.length < 2) return null
+  const step = direction === 'next' ? 1 : -1
+  return rows[(start + step + rows.length) % rows.length].id
+}
+
 export async function countWithoutImage() {
   const { count } = await supabase!.from('stamp_overview').select('*', { count: 'exact', head: true }).is('primary_thumb_path', null)
   return count ?? 0
